@@ -1,0 +1,95 @@
+{
+  "esmcat_version": "0.0.1",
+  "attributes": [
+    {
+      "column_name": "era_id",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "datatype",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "level_type",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "step_type",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "table_code",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "param_code",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "variable",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "long_name",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "units",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "year",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "month",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "format",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "frequency",
+      "vocabulary": ""
+    },
+    {
+      "column_name": "path",
+      "vocabulary": ""
+    }
+  ],
+  "assets": {
+    "column_name": "path",
+    "format": "netcdf",
+    "format_column_name": null
+  },
+  "aggregation_control": {
+    "variable_column_name": "variable",
+    "groupby_attrs": [
+      "datatype",
+      "level_type",
+      "table_code"
+    ],
+    "aggregations": [
+      {
+        "type": "union",
+        "attribute_name": "variable",
+        "options": {}
+      },
+      {
+        "type": "join_existing",
+        "attribute_name": "time_range",
+        "options": {
+          "dim": "time",
+          "coords": "minimal",
+          "compat": "override"
+        }
+      }
+    ]
+  },
+  "id": "era5_catalog_test",
+  "description": null,
+  "title": null,
+  "last_updated": "2024-05-13T16:52:36Z",
+  "catalog_file": "file:///glade/u/home/harshah/rda-intake-esm/jupyter_notebooks/era5_catalog_test.csv"
+}
