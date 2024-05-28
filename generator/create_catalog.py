@@ -46,13 +46,13 @@ def get_parser():
             metavar='<value>',
             default=0,
             help="depth to search")
-    parser.add_argument('--depth', '-d',
-            type=int,
+    parser.add_argument('--ignore_vars', '-i',
+            type=str,
             nargs='*',
             required=False,
-            metavar='<value>',
-            default=0,
-            help="depth to search")
+            metavar='<var name>',
+            default=[],
+            help="Optionally ignore specific variables e.g. utc_date")
     parser.add_argument('--var_metadata', '-vm',
             type=str,
             required=False,
