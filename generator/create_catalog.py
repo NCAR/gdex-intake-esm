@@ -6,6 +6,7 @@ import re
 import pdb
 
 import xarray
+import pandas as pd
 import intake_esm
 import ecgtools
 
@@ -160,7 +161,16 @@ def create_catalog(directories, out='./', depth=0, exclude='',
                          exclude_patterns=exclude)
     pdb.set_trace()
     b.build(parsing_func=file_parser)
-    # TODO: expand pd.Series to larger df
+
+    # extract dicts and combine
+    new_df = pd.DataFrame(columns=b.df[0][0].keys())
+    dict_list = []
+    for i,d in b.df.iterrows():
+        for j in d:
+            dict_list.append(j)
+    pdb.set_trace()
+    b.df = new_df.from_records(dict_list)
+
     b.save(
     name=catalog_name,
     path_column_name='path',
