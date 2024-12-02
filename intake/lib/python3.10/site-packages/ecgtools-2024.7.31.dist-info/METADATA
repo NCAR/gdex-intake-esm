@@ -1,0 +1,77 @@
+Metadata-Version: 2.1
+Name: ecgtools
+Version: 2024.7.31
+Summary: ESM Catalog Generation Utilities
+Home-page: https://github.com/ncar-xdev/ecgtools
+Maintainer: NCAR XDev Team
+Maintainer-email: xdev@ucar.edu
+License: Apache Software License 2.0
+Project-URL: Documentation, https://ecgtools.readthedocs.io/
+Project-URL: Source, https://github.com/ncar-xdev/ecgtools
+Project-URL: Tracker, https://github.com/ncar-xdev/ecgtools/issues
+Keywords: ecgtools
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Scientific/Engineering
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: cf-xarray
+Requires-Dist: joblib
+Requires-Dist: netCDF4
+Requires-Dist: xarray
+Requires-Dist: pyyaml
+Requires-Dist: pydantic >=2.0
+Requires-Dist: pandas
+Requires-Dist: fsspec
+Requires-Dist: intake-esm >=2023.7.7
+
+# ecgtools
+
+| CI          | [![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![Code Coverage Status][codecov-badge]][codecov-link] [![pre-commit.ci status][pre-commit.ci-badge]][pre-commit.ci-link] |
+| :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| **Docs**    |                                                                     [![Documentation Status][rtd-badge]][rtd-link]                                                                     |
+| **Package** |                                                          [![Conda][conda-badge]][conda-link] [![PyPI][pypi-badge]][pypi-link]                                                          |
+| **License** |                                                                         [![License][license-badge]][repo-link]                                                                         |
+
+## Motivation
+
+The critical requirement for using [`intake-esm`](https://github.com/intake/intake-esm) is having a data catalog. This package enables you to build data catalogs to be read in by [`intake-esm`](https://github.com/intake/intake-esm), which enables a user to easily search, discover, and access datasets they are interested in using.
+
+See [documentation](https://ecgtools.readthedocs.io) for more information.
+
+## Installation
+
+ecgtools can be installed from PyPI with pip:
+
+```bash
+python -m pip install ecgtools
+```
+
+It is also available from conda-forge for conda installations:
+
+```bash
+conda install -c conda-forge ecgtools
+```
+
+[github-ci-badge]: https://github.com/ncar-xdev/ecgtools/actions/workflows/ci.yaml/badge.svg
+[github-ci-link]: https://github.com/ncar-xdev/ecgtools/actions/workflows/ci.yaml
+[codecov-badge]: https://img.shields.io/codecov/c/github/ncar-xdev/ecgtools.svg?logo=codecov
+[codecov-link]: https://codecov.io/gh/ncar-xdev/ecgtools
+[rtd-badge]: https://img.shields.io/readthedocs/ecgtools/latest.svg
+[rtd-link]: https://ecgtools.readthedocs.io/en/latest/?badge=latest
+[pypi-badge]: https://img.shields.io/pypi/v/ecgtools?logo=pypi
+[pypi-link]: https://pypi.org/project/ecgtools
+[conda-badge]: https://img.shields.io/conda/vn/conda-forge/ecgtools?logo=anaconda
+[conda-link]: https://anaconda.org/conda-forge/ecgtools
+[license-badge]: https://img.shields.io/github/license/ncar-xdev/ecgtools
+[repo-link]: https://github.com/ncar-xdev/ecgtools
+[pre-commit.ci-badge]: https://results.pre-commit.ci/badge/github/ncar-xdev/ecgtools/main.svg
+[pre-commit.ci-link]: https://results.pre-commit.ci/latest/github/ncar-xdev/ecgtools/main

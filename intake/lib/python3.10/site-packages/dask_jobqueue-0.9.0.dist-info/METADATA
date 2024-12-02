@@ -1,0 +1,37 @@
+Metadata-Version: 2.1
+Name: dask-jobqueue
+Version: 0.9.0
+Summary: Deploy Dask on job queuing systems like PBS, Slurm, SGE or LSF
+Home-page: https://jobqueue.dask.org
+License: BSD 3-Clause
+Requires-Python: >=3.10
+License-File: LICENSE.txt
+Requires-Dist: dask >=2022.02.0
+Requires-Dist: distributed >=2022.02.0
+Provides-Extra: test
+Requires-Dist: pytest ; extra == 'test'
+Requires-Dist: pytest-asyncio ; extra == 'test'
+Requires-Dist: cryptography ; extra == 'test'
+
+Deploy Dask on Job Queueing systems
+===================================
+
+|Build Status| |Doc Status| |Version Status|
+
+Easy deployment of Dask Distributed on job queuing systems such as PBS, Slurm,
+or SGE.  See documentation_ for more information.
+
+
+LICENSE
+-------
+
+New BSD. See `License File <https://github.com/dask/dask-jobqueue/blob/main/LICENSE.txt>`__.
+
+.. _documentation: https://jobqueue.dask.org/en/latest/
+.. |Build Status| image:: https://github.com/dask/dask-jobqueue/actions/workflows/ci.yaml/badge.svg
+   :target: https://github.com/dask/dask-jobqueue/actions
+.. |Doc Status| image:: https://readthedocs.org/projects/dask-jobqueue/badge/?version=latest
+   :target: https://jobqueue.dask.org/en/latest/
+   :alt: Documentation Status
+.. |Version Status| image:: https://img.shields.io/pypi/v/dask-jobqueue.svg
+   :target: https://pypi.python.org/pypi/dask-jobqueue/

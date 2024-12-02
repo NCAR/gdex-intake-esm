@@ -1,0 +1,3 @@
+[fsspec.specs]
+osdf = pelicanfs.core.OSDFFileSystem
+pelican = pelicanfs.core.PelicanFileSystem

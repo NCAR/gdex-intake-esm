@@ -1,0 +1,3 @@
+[intake.drivers]
+esm_datasource = intake_esm.source:ESMDataSource
+esm_datastore = intake_esm.core:esm_datastore

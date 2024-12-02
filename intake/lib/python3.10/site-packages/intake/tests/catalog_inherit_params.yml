@@ -1,0 +1,43 @@
+---
+metadata:
+  version: 1
+  parameters:
+    bucket:
+      type: str
+      description: description
+      default: test_bucket
+sources:
+  param:
+    driver: parquet
+    description: description
+    args:
+      urlpath: s3://{{bucket}}/file.parquet
+  local_param_overwrites:
+    driver: parquet
+    description: description
+    parameters:
+      bucket:
+        type: str
+        description: description
+        default: local_param
+    args:
+      urlpath: s3://{{bucket}}/file.parquet
+  local_and_global_params:
+    driver: parquet
+    description: description
+    parameters:
+      filename:
+        type: str
+        description: description
+        default: local_filename.parquet
+    args:
+      urlpath: s3://{{bucket}}/{{filename}}
+  subcat:
+    driver: yaml_file_cat
+    args:
+      path: "{{CATALOG_DIR}}/catalog_nested_sub.yml"
+      user_parameters:
+        inner:
+          type: str
+          description: description
+          default: test_name
