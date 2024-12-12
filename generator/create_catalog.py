@@ -4,11 +4,15 @@ import os
 import argparse
 import re
 import pdb
+import logging
 
 import xarray
 import pandas as pd
 import intake_esm
 import ecgtools
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 
@@ -88,12 +92,15 @@ def get_engine(file_path):
     if re.match('.*\.zarr$', file_path):
         return 'zarr'
 
-def file_parser(file_path, ignore_vars=[], var_attrs=[]):
+def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
     """File parser used in Builder object to extract column values.
 
     Args:
         file_path (str, Path): path to data_file
-        ignore_vars (list[str]): Variable names to ignore. e.g. 'utc_time'
+        ignore_vars (list(str)): Variable names to ignore. e.g. 'utc_time'
+        var_metadata (list(str): Extra variable level metadata to pull.
+                format is [{'<prefered column name>: <variable attr>:<default value>
+
 
     Returns:
         dict: Keys are column names and values specific to file.
@@ -102,8 +109,14 @@ def file_parser(file_path, ignore_vars=[], var_attrs=[]):
     rows = []
     with xarray.open_dataset(file_path, engine=engine) as ds:
         for var_name in ds.data_vars:
+            if var_name in ignore_vars:
+                continue
             row = {'path':file_path, 'variable':var_name}
             var = ds[var_name]
+            if var_metadata:
+                pass
+            if global_metadata:
+                pass
             row.update(get_var_attrs(var))
             rows.append(row)
     return rows
@@ -148,8 +161,11 @@ def main(args_list):
         parser.print_help()
         sys.exit(1)
     args = parser.parse_args(args_list)
-    print(args)
+
+    logger.debug(f'Parsing args: {args}')
     args_dict = vars(args)
+    args_dict.pop('global_metadata')
+    args_dict.pop('var_metadata')
     create_catalog(**args_dict)
 
 
@@ -159,8 +175,7 @@ def create_catalog(directories, out='./', depth=0, exclude='',
     b = ecgtools.Builder(paths=directories,
                          depth=depth,
                          exclude_patterns=exclude)
-    pdb.set_trace()
-    b.build(parsing_func=file_parser)
+    b.build(parsing_func=file_parser, parsing_func_kwargs=kwargs)
 
     # extract dicts and combine
     new_df = pd.DataFrame(columns=b.df[0][0].keys())
@@ -168,7 +183,6 @@ def create_catalog(directories, out='./', depth=0, exclude='',
     for i,d in b.df.iterrows():
         for j in d:
             dict_list.append(j)
-    pdb.set_trace()
     b.df = new_df.from_records(dict_list)
 
     b.save(
