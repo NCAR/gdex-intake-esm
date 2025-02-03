@@ -55,7 +55,7 @@ def get_parser():
             help="Exclude glob")
     parser.add_argument('--depth', '-d',
             type=int,
-            nargs='*',
+            nargs=None,
             required=False,
             metavar='<value>',
             default=0,
@@ -92,6 +92,7 @@ def get_engine(file_path):
     if re.match('.*\.zarr$', file_path):
         return 'zarr'
 
+
 def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
     """File parser used in Builder object to extract column values.
 
@@ -105,6 +106,7 @@ def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
     Returns:
         dict: Keys are column names and values specific to file.
     """
+    print(f'Gathering {file_path}')
     engine = get_engine(file_path)
     rows = []
     with xarray.open_dataset(file_path, engine=engine) as ds:
@@ -143,6 +145,16 @@ def get_var_attrs(var):
     var_attrs['short_name'] = var.attrs.get('short_name', var.name)
     var_attrs['long_name'] = var.attrs.get('long_name', NO_DATA_STR)
     var_attrs['units'] = var.attrs.get('units', NO_DATA_STR)
+    # Get time
+    for i in var.coords:
+        if var[i].standard_name == 'time':
+            time = var[i].data.flatten()
+            var_attrs['start_time'] = time[0]
+            var_attrs['end_time'] = time[-1]
+            break
+        else:
+            var_attrs['start_time'] = ''
+            var_attrs['end_time'] = ''
     return var_attrs
 
 
@@ -169,7 +181,7 @@ def main(args_list):
     create_catalog(**args_dict)
 
 
-def create_catalog(directories, out='./', depth=0, exclude='',
+def create_catalog(directories, out='./', depth=20, exclude='',
                    catalog_name='catalog', description='',  **kwargs):
     print(kwargs)
     b = ecgtools.Builder(paths=directories,
