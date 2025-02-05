@@ -145,16 +145,22 @@ def get_var_attrs(var):
     var_attrs['short_name'] = var.attrs.get('short_name', var.name)
     var_attrs['long_name'] = var.attrs.get('long_name', NO_DATA_STR)
     var_attrs['units'] = var.attrs.get('units', NO_DATA_STR)
-    # Get time
+    # Get time and level
+    var_attrs['start_time'] = ''
+    var_attrs['end_time'] = ''
+    var_attrs['level'] = ''
+    var_attrs['level_units'] = ''
+    var_attrs['frequency'] = ''
     for i in var.coords:
         if var[i].standard_name == 'time':
             time = var[i].data.flatten()
             var_attrs['start_time'] = time[0]
             var_attrs['end_time'] = time[-1]
-            break
-        else:
-            var_attrs['start_time'] = ''
-            var_attrs['end_time'] = ''
+            if len(time) > 1:
+                var_attrs['frequency'] = time[1] - time[0]
+        if 'vertical_orientation' in var[i].attrs:
+            var_attrs['level'] = var[i].attrs['standard_name']
+            var_attrs['level_units'] = var[i].attrs['units']
     return var_attrs
 
 
