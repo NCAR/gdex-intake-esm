@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 NO_DATA_STR = ""
 
 def get_parser():
+    """Returns argpars parser."""
     description = "CLI to generate intake-esm cataloges."
     parser = argparse.ArgumentParser(
             prog='create_catalog',
@@ -79,11 +80,23 @@ def get_parser():
             metavar='<json string/filename>',
             default='{}',
             help="Additional global level metadata to extract.")
+    parser.add_argument('--make_remote', '-mr',
+            action='store_true',
+            required=False,
+            help='Additionally make a remote accessible copy of json/csv',
+            default=False)
 
     return parser
 
 def get_engine(file_path):
-    """Gets xarray engine based on file."""
+    """Gets xarray engine based on file.
+
+    Args:
+        file_path(str): determines engine based on filepath.
+
+    Returns:
+        engine(str): xarray engine string.
+    """
     #TODO: what if kerchunk reference?
     if re.match('.*\.nc$', file_path):
         return 'netcdf4'
@@ -115,10 +128,14 @@ def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
                 continue
             row = {'path':file_path, 'variable':var_name}
             var = ds[var_name]
-            if var_metadata:
-                pass
-            if global_metadata:
-                pass
+            if len(var_metadata) > 0:
+                for attr in var_metadata:
+                    if attr in var.attrs:
+                        row.update({attr:var.attrs[attr]})
+            if len(global_metadata) > 0:
+                for attr in global_metadata:
+                    if attr in ds.attrs:
+                        row.update({v:var.attrs[v]})
             row.update(get_var_attrs(var))
             rows.append(row)
     return rows
@@ -151,16 +168,19 @@ def get_var_attrs(var):
     var_attrs['level'] = ''
     var_attrs['level_units'] = ''
     var_attrs['frequency'] = ''
-    for i in var.coords:
-        if var[i].standard_name == 'time':
-            time = var[i].data.flatten()
+    for coord in var.coords:
+        cur_var = var[coord]
+        if cur_var.standard_name == 'time':
+            time = cur_var.data.flatten()
             var_attrs['start_time'] = time[0]
             var_attrs['end_time'] = time[-1]
             if len(time) > 1:
                 var_attrs['frequency'] = time[1] - time[0]
-        if 'vertical_orientation' in var[i].attrs:
-            var_attrs['level'] = var[i].attrs['standard_name']
-            var_attrs['level_units'] = var[i].attrs['units']
+        if 'vertical_orientation' in cur_var.attrs:
+            if 'standard_name' in cur_var.attrs:
+                var_attrs['level'] = cur_var.attrs['standard_name']
+            if 'units' in cur_var.attrs:
+                var_attrs['level_units'] = cur_var.attrs['units']
     return var_attrs
 
 
@@ -185,6 +205,20 @@ def main(args_list):
     args_dict.pop('global_metadata')
     args_dict.pop('var_metadata')
     create_catalog(**args_dict)
+
+def make_remote(filename, outfile):
+    """Make OSDF and HTTP versions of a given file."""
+
+    osdf_outfile = filename.replace('.json','-osdf.json')
+    https_outfile = filename.replace('.json','-http.json')
+    with open(filename) as fh:
+        osdf_fh = open(osdf_outfile, 'w')
+        https_fh = open(https_outfile, 'w')
+        for i in fh:
+            new_str_osdf = i.replace('/glade/campaign/collections/rda/data/','osdf://data.rda.ucar.edu/')
+            osdf_fh.write(new_str_osdf)
+            new_str_https = i.replace('/glade/campaign/collections/rda/data/','https://data.rda.ucar.edu/')
+            https_fh.write(new_str_https)
 
 
 def create_catalog(directories, out='./', depth=20, exclude='',
@@ -223,6 +257,11 @@ def create_catalog(directories, out='./', depth=20, exclude='',
     description = description,
     directory = out
     )
+
+    if 'make_remote' in kwargs and kwargs['make_remote']:
+        make_remote(os.path.join(out,f'{catalog_name}.csv'))
+
+
 
 
 if __name__ == '__main__':
