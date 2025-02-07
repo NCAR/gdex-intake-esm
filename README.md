@@ -1,3 +1,3 @@
 # rda-intake-esm
 
-This is where the intake-esm catalogs used to access various datasets in the NCAR Research Data Archive live.
+Code used to generate the intake-esm catalogs used to access various datasets in NCAR's Research Data Archive.
