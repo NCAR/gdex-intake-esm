@@ -54,7 +54,7 @@ toolz==0.12.1
 tornado==6.4.2
 typing_extensions==4.11.0
 tzdata==2024.1
-urllib3==2.2.1
+urllib3==2.2.2
 xarray==2024.5.0
 xyzservices==2024.4.0
 zarr==2.18.1
