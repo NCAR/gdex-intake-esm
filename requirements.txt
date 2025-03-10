@@ -3,7 +3,7 @@ appdirs==1.4.4
 asciitree==0.3.3
 asyncssh==2.18.0
 bokeh==3.4.1
-certifi==2024.2.2
+certifi==2024.7.4
 cf_xarray==0.9.0
 cffi==1.17.1
 cftime==1.6.3
