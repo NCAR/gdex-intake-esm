@@ -24,7 +24,7 @@ idna==3.7
 importlib_metadata==7.1.0
 intake==0.7.0
 intake-esm==2024.2.6
-Jinja2==3.1.5
+Jinja2==3.1.6
 joblib==1.4.2
 locket==1.0.0
 lz4==4.3.3
