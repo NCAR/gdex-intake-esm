@@ -59,7 +59,6 @@ typing_extensions==4.11.0
 tzdata==2024.1
 urllib3==2.2.2
 wrapt==1.17.2
->>>>>>> 98a97625 (Allowed Kerchunk to be cataloged)
 xarray==2024.5.0
 xyzservices==2024.4.0
 zarr==2.18.4
