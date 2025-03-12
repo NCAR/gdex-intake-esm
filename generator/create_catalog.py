@@ -105,7 +105,7 @@ def get_engine(file_path):
     if re.match('.*\.zarr$', file_path):
         return 'zarr'
     if re.match('.*\.json$', file_path):
-        return 'kerchunk'
+        return 'reference'
 
 
 def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
@@ -125,7 +125,11 @@ def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
     engine = get_engine(file_path)
     rows = []
     backend_kwargs = None
-    if engine == 'kerchunk':
+    path_str = file_path
+    _format = engine
+    if engine == 'netcdf4':
+        _format = 'netcdf'
+    if engine == 'reference':
             fs = fsspec.filesystem('reference', fo=file_path)
             file_path = fs.get_mapper('')
             engine = 'zarr'
@@ -134,7 +138,7 @@ def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
         for var_name in ds.data_vars:
             if var_name in ignore_vars:
                 continue
-            row = {'path':file_path, 'variable':var_name}
+            row = {'path':path_str, 'variable':var_name, 'format':_format}
             var = ds[var_name]
             if len(var_metadata) > 0:
                 for attr in var_metadata:
@@ -146,6 +150,7 @@ def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
                         row.update({v:var.attrs[v]})
             row.update(get_var_attrs(var))
             rows.append(row)
+    print(f'rows:{len(rows)}')
     return rows
 
 def get_default_var_metadata():
@@ -191,7 +196,6 @@ def get_var_attrs(var):
             if 'units' in cur_var.attrs:
                 var_attrs['level_units'] = cur_var.attrs['units']
     return var_attrs
-
 
 
 def main(args_list):
@@ -243,7 +247,8 @@ def create_catalog(directories, out='./', depth=20, exclude='',
     dict_list = []
     for i,d in b.df.iterrows():
         for j in d:
-            dict_list.append(j)
+            if j:
+                dict_list.append(j)
     b.df = new_df.from_records(dict_list)
 
     b.save(
@@ -251,6 +256,7 @@ def create_catalog(directories, out='./', depth=20, exclude='',
     path_column_name='path',
     variable_column_name='variable',
     data_format='netcdf',
+    format_column_name='format',
     groupby_attrs=[
         'variable',
         'short_name'
