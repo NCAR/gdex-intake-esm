@@ -11,15 +11,22 @@ charset-normalizer==3.3.2
 click==8.1.7
 cloudpickle==3.0.0
 contourpy==1.2.1
+<<<<<<< HEAD
 cryptography==44.0.1
+=======
+crc32c==2.7.1
+cryptography==44.0.0
+>>>>>>> 98a97625 (Allowed Kerchunk to be cataloged)
 dask==2024.5.1
 dask-expr==1.1.1
+Deprecated==1.2.18
 distributed==2024.5.1
+donfig==0.8.1.post1
 ecgtools==2023.7.13
 entrypoints==0.4
 fasteners==0.19
 fastprogress==1.0.3
-fsspec==2024.5.0
+fsspec==2025.3.0
 idna==3.7
 importlib_metadata==7.1.0
 intake==0.7.0
@@ -31,7 +38,7 @@ lz4==4.3.3
 MarkupSafe==2.1.5
 msgpack==1.0.8
 netCDF4==1.6.5
-numcodecs==0.12.1
+numcodecs==0.15.1
 numpy==1.26.4
 packaging==24.0
 pandas==2.2.2
@@ -51,12 +58,17 @@ six==1.16.0
 sortedcontainers==2.4.0
 tblib==3.0.0
 toolz==0.12.1
-tornado==6.4.2
+tornado==6.4
 typing_extensions==4.11.0
 tzdata==2024.1
+<<<<<<< HEAD
 urllib3==2.2.2
+=======
+urllib3==2.2.1
+wrapt==1.17.2
+>>>>>>> 98a97625 (Allowed Kerchunk to be cataloged)
 xarray==2024.5.0
 xyzservices==2024.4.0
-zarr==2.18.1
+zarr==2.18.4
 zict==3.0.0
 zipp==3.19.1

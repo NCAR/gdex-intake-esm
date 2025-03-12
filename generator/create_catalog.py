@@ -10,6 +10,7 @@ import xarray
 import pandas as pd
 import intake_esm
 import ecgtools
+import fsspec
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -97,13 +98,14 @@ def get_engine(file_path):
     Returns:
         engine(str): xarray engine string.
     """
-    #TODO: what if kerchunk reference?
     if re.match('.*\.nc$', file_path):
         return 'netcdf4'
     if re.match('.*\.grib$', file_path) or re.match('.*\.grb$', file_path):
         return 'cfgrib'
     if re.match('.*\.zarr$', file_path):
         return 'zarr'
+    if re.match('.*\.json$', file_path):
+        return 'kerchunk'
 
 
 def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
@@ -122,7 +124,13 @@ def file_parser(file_path, ignore_vars=[], var_metadata=[], global_metadata=[]):
     print(f'Gathering {file_path}')
     engine = get_engine(file_path)
     rows = []
-    with xarray.open_dataset(file_path, engine=engine) as ds:
+    backend_kwargs = None
+    if engine == 'kerchunk':
+            fs = fsspec.filesystem('reference', fo=file_path)
+            file_path = fs.get_mapper('')
+            engine = 'zarr'
+            backend_kwargs = {'consolidated':False}
+    with xarray.open_dataset(file_path, engine=engine, backend_kwargs=backend_kwargs) as ds:
         for var_name in ds.data_vars:
             if var_name in ignore_vars:
                 continue
@@ -170,7 +178,8 @@ def get_var_attrs(var):
     var_attrs['frequency'] = ''
     for coord in var.coords:
         cur_var = var[coord]
-        if cur_var.standard_name == 'time':
+        if 'standard_name' in cur_var.attrs and cur_var.standard_name == 'time' \
+                or coord.lower() == 'time':
             time = cur_var.data.flatten()
             var_attrs['start_time'] = time[0]
             var_attrs['end_time'] = time[-1]
@@ -222,7 +231,7 @@ def make_remote(filename, outfile):
 
 
 def create_catalog(directories, out='./', depth=20, exclude='',
-                   catalog_name='catalog', description='',  **kwargs):
+                   catalog_name='catalog', description='', make_remote=False,  **kwargs):
     print(kwargs)
     b = ecgtools.Builder(paths=directories,
                          depth=depth,
