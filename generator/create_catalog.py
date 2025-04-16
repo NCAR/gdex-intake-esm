@@ -219,11 +219,12 @@ def main(args_list):
     args_dict.pop('var_metadata')
     create_catalog(**args_dict)
 
-def make_remote(filename, outfile):
+def make_remote(filename):
     """Make OSDF and HTTP versions of a given file."""
+    print(f'Making remote copies of {filename}')
 
-    osdf_outfile = filename.replace('.json','-osdf.json')
-    https_outfile = filename.replace('.json','-http.json')
+    osdf_outfile = filename.replace('.csv','-osdf.csv')
+    https_outfile = filename.replace('.csv','-http.csv')
     with open(filename) as fh:
         osdf_fh = open(osdf_outfile, 'w')
         https_fh = open(https_outfile, 'w')
@@ -272,7 +273,7 @@ def create_catalog(directories, out='./', depth=20, exclude='',
     description = description,
     directory = out
     )
-
+    print(kwargs)
     if 'make_remote' in kwargs and kwargs['make_remote']:
         make_remote(os.path.join(out,f'{catalog_name}.csv'))
 
