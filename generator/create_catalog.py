@@ -237,6 +237,18 @@ def make_remote(filename):
 
 def create_catalog(directories, out='./', depth=20, exclude='',
                    catalog_name='catalog', description='', make_remote=False,  **kwargs):
+    """Creates an intake esm catalog from a collection assets.
+    Can be zarr, kerchunk, netcdf, or grib.
+    Args:
+        directories (list): Search directories
+        out (str): output file location
+        depth (int): How deep to search
+        exclude: Regex to exclude. e.g. .*\.html
+        catalog_name (str): filename of catalog
+        description (str): short description of catalog.
+        make_remote (bool): make OSDF and HTTP versions of this dataset
+        kwargs: Aditional parsing function arguments
+    """
     print(kwargs)
     b = ecgtools.Builder(paths=directories,
                          depth=depth,
