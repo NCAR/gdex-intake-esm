@@ -166,7 +166,7 @@ def get_var_attrs(var):
     """Gets relevant metadata from xarray DataArray-like object.
 
     Args:
-        var (xarray.core.dataarray.DataArray): Variable to pull attributes.
+        var (xarray.core.dataarray.DataArray): Variable from which to pull attributes.
 
     Returns:
         dict: Contains variable level metadata
@@ -174,6 +174,8 @@ def get_var_attrs(var):
     var_attrs = {}
     var_attrs['short_name'] = var.attrs.get('short_name', var.name)
     var_attrs['long_name'] = var.attrs.get('long_name', NO_DATA_STR)
+    if var_attrs['long_name'] == NO_DATA_STR:
+        var_attrs['long_name'] = var.attrs.get('description', NO_DATA_STR)
     var_attrs['units'] = var.attrs.get('units', NO_DATA_STR)
     # Get time and level
     var_attrs['start_time'] = ''
