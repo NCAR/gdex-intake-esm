@@ -5,6 +5,7 @@ import argparse
 import re
 import pdb
 import logging
+import json
 
 import xarray
 import pandas as pd
@@ -221,7 +222,40 @@ def main(args_list):
     args_dict.pop('var_metadata')
     create_catalog(**args_dict)
 
-def make_remote(filename):
+
+def convert_to_parquet(filename_base):
+    """Convert json and csv file to parquet
+
+    Args:
+        filename_base (str): Full filepath--without '.csv' or '.json'
+
+    Returns:
+        None
+    """
+    json_file = f'{filename_base}.json'
+    csv_file = f'{filename_base}.csv'
+    parquet_file= f'{filename_base}.parquet'
+
+
+    pd.read_csv(csv_file)
+    pd.to_parquet(parquet_file)
+
+def change_catalog_file(json_file, new_catalog_filename):
+    """Change catalog in intake-esm catalog
+
+    Args:
+        json_file (str): intake-esm catalog filepath
+        new_catalog_filename (str): catalog csv or parquet filename
+
+    Returns:
+        None
+    """
+    cat = json.load(open(json_file))
+    cat['catalog_file'] = os.path.basename(new_catalog_filename)
+    json.dump(cat, open(json_file, 'w'))
+
+
+def make_remote_csv(filename):
     """Make OSDF and HTTP versions of a given file."""
     print(f'Making remote copies of {filename}')
 
@@ -231,14 +265,15 @@ def make_remote(filename):
         osdf_fh = open(osdf_outfile, 'w')
         https_fh = open(https_outfile, 'w')
         for i in fh:
-            new_str_osdf = i.replace('/glade/campaign/collections/rda/data/','osdf://data.rda.ucar.edu/')
+            new_str_osdf = i.replace('/glade/campaign/collections/rda/data/','https://data-osdf.rda.ucar.edu/')
             osdf_fh.write(new_str_osdf)
             new_str_https = i.replace('/glade/campaign/collections/rda/data/','https://data.rda.ucar.edu/')
             https_fh.write(new_str_https)
 
 
 def create_catalog(directories, out='./', depth=20, exclude='',
-                   catalog_name='catalog', description='', make_remote=False,  **kwargs):
+                   catalog_name='catalog', description='', make_remote=False,
+                   use_parquet=True, **kwargs):
     """Creates an intake esm catalog from a collection assets.
     Can be zarr, kerchunk, netcdf, or grib.
     Args:
@@ -267,29 +302,32 @@ def create_catalog(directories, out='./', depth=20, exclude='',
     b.df = new_df.from_records(dict_list)
 
     b.save(
-    name=catalog_name,
-    path_column_name='path',
-    variable_column_name='variable',
-    data_format='netcdf',
-    format_column_name='format',
-    groupby_attrs=[
-        'variable',
-        'short_name'
-    ],
-    aggregations=[
-        {'type': 'union', 'attribute_name': 'variable'},
-        {
-            'type': 'join_existing',
-            'attribute_name': 'time_range',
-            'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'},
-        },
-    ],
-    description = description,
-    directory = out
+        name=catalog_name,
+        path_column_name='path',
+        variable_column_name='variable',
+        data_format='netcdf',
+        format_column_name='format',
+        groupby_attrs=[
+            'variable',
+            'short_name'
+        ],
+        aggregations=[
+            {'type': 'union', 'attribute_name': 'variable'},
+            {
+                'type': 'join_existing',
+                'attribute_name': 'time_range',
+                'options': {'dim': 'time', 'coords': 'minimal', 'compat': 'override'},
+            },
+        ],
+        description = description,
+        directory = out
     )
-    print(kwargs)
-    if 'make_remote' in kwargs and kwargs['make_remote']:
-        make_remote(os.path.join(out,f'{catalog_name}.csv'))
+    if use_parquet:
+        convert_to_parquet(os.path.join(out,f'{catalog_name}'))
+
+
+    if make_remote:
+        make_remote_csv(os.path.join(out,f'{catalog_name}.csv'))
 
 
 
