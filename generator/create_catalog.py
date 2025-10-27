@@ -3,6 +3,11 @@
 Can handle zarr, kerchunk, netcdf, or grib.
 
 
+package version needed to be pined:
+    intake-esm                2025.7.9
+    ecgtools                  Riley's fork version
+    pydantic                  2.11.9
+
 Usage:    
 
 python create_catalog.py <directory> 
@@ -18,7 +23,7 @@ python create_catalog.py <directory>
 
 
 Testing example:
-python create_catalog.py /lustre/desc1/scratch/chiaweih/d640000.jra3q/kerchunk_test/ --data_format reference --out /lustre/desc1/scratch/chiaweih/d640000.jra3q/catalog --output_format csv --catalog_name d640000_catalog --description "JRA3Q kerchunk catalog" --depth 0 --make_remote
+python create_catalog.py /lustre/desc1/scratch/chiaweih/d640000.jra3q/kerchunk_test/ --data_format reference --out /lustre/desc1/scratch/chiaweih/d640000.jra3q/catalog --output_format csv_and_json --catalog_name d640000_catalog --description "JRA3Q kerchunk catalog" --depth 0 --make_remote
 """
 # import pdb
 # import intake_esm
@@ -42,7 +47,6 @@ logger = logging.getLogger(__name__)
 
 # constant definitions
 NO_DATA_STR = ""
-_format = None
 
 
 def get_parser():
@@ -75,8 +79,8 @@ def get_parser():
             type=str,
             required=False,
             metavar='<name>',
-            default='catalog',
-            help="Name of catalog")
+            default='intake_catalog',
+            help="Name of catalog should be in the format of dxxxxxx_catalog")
     parser.add_argument('--description',
             type=str,
             required=False,
@@ -123,9 +127,9 @@ def get_parser():
             type=str,
             required=False,
             metavar='<format>',
-            choices=['csv', 'parquet', 'json'],
-            help='The output format of the catalog (csv / parquet / json).',
-            default='csv')
+            choices=['csv_and_json', 'single_json'],
+            help='The output format of the catalog (csv_and_json / single_json).',
+            default='csv_and_json')
 
     return parser
 
@@ -195,7 +199,6 @@ def file_parser(file_path, data_format='netcdf', ignore_vars=None, var_metadata=
 
     Args:
         file_path (str, Path): path to data_file
-        output_format (str): The output format of the catalog (csv / parquet / json).
         ignore_vars (list(str)): Variable names to ignore. e.g. 'utc_time'
         var_metadata (list(str)): Extra variable level metadata to pull.
             ex: ['long_name', 'standard_name']
@@ -306,16 +309,22 @@ def convert_to_parquet(filename_base):
 #     json.dump(cat, open(json_file, 'w'))
 
 
-def make_remote_catalog(filename, output_format='csv'):
+def make_remote_catalog(filename, output_format='csv_and_json'):
     """Make OSDF and HTTP versions of a given file."""
     print(f'Making remote copies of {filename}')
+    # find name before extension
+    filename_base = os.path.basename(filename)
+    # find output directory path
+    out_dir = os.path.dirname(filename)
+    # based on catalog output format get the dataset number
+    dataset_id = filename_base.split('_')[0]
 
     # check output format
-    if output_format.lower() == 'csv':
+    if output_format.lower() == 'csv_and_json':
         output_ext = '.csv'
-    elif output_format.lower() == 'parquet':
-        output_ext = '.parq'
-    elif output_format.lower() == 'json':
+    # elif output_format.lower() == 'parquet':
+    #     output_ext = '.parq'
+    elif output_format.lower() == 'single_json':
         output_ext = '.json'
     else:
         raise ValueError(f'Unsupported output format: {output_format}')
@@ -329,7 +338,8 @@ def make_remote_catalog(filename, output_format='csv'):
     https_str = 'https://data.gdex.ucar.edu/'
     osdf_str = 'https://data-osdf.gdex.ucar.edu/'
 
-    if output_format.lower() == 'csv':
+    if output_format.lower() == 'csv_and_json':
+        # modify csv file line by line
         with open(filename) as fh:
             osdf_fh = open(osdf_outfile, 'w')
             https_fh = open(https_outfile, 'w')
@@ -341,16 +351,34 @@ def make_remote_catalog(filename, output_format='csv'):
             osdf_fh.close()
             https_fh.close()
 
-    elif output_format.lower() == 'parquet':
-        df = pd.read_parquet(filename)
-        df_osdf = df.copy(deep=True)
-        df_https = df.copy(deep=True)
-        df_osdf['path'] = df_osdf['path'].str.replace(match_str, osdf_str)
-        df_https['path'] = df_https['path'].str.replace(match_str, https_str)
-        df_osdf.to_parquet(osdf_outfile)
-        df_https.to_parquet(https_outfile)
+        # modify json file that is associated with csv
+        json_filename = os.path.join(out_dir, filename_base.replace('.csv', '.json'))
+        with open(json_filename) as fh:
+            data = json.load(fh)
+        # Create OSDF version dir structure need to be
+        #  https://data-osdf.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}_catalog-osdf.csv
+        data['catalog_file'] = f'{osdf_str}{dataset_id}/catalogs/{dataset_id}_catalog-osdf.csv'
+        osdf_outfile = json_filename.replace('.json', '-osdf.json')
+        with open(osdf_outfile, 'w') as osdf_fh:
+            json.dump(data, osdf_fh)
+        # Create HTTPS version
+        #  https version dir structure need to be
+        #  https://data.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}_catalog-http.csv
+        data['catalog_file'] = f'{https_str}{dataset_id}/catalogs/{dataset_id}_catalog-http.csv'
+        https_outfile = json_filename.replace('.json', '-http.json')
+        with open(https_outfile, 'w') as https_fh:
+            json.dump(data, https_fh)
 
-    elif output_format.lower() == 'json':
+    # elif output_format.lower() == 'parquet':
+    #     df = pd.read_parquet(filename)
+    #     df_osdf = df.copy(deep=True)
+    #     df_https = df.copy(deep=True)
+    #     df_osdf['path'] = df_osdf['path'].str.replace(match_str, osdf_str)
+    #     df_https['path'] = df_https['path'].str.replace(match_str, https_str)
+    #     df_osdf.to_parquet(osdf_outfile)
+    #     df_https.to_parquet(https_outfile)
+
+    elif output_format.lower() == 'single_json':
         with open(filename) as fh:
             data = json.load(fh)
         # Create OSDF version
@@ -373,10 +401,10 @@ def create_catalog(
     out='./',
     depth=20,
     exclude='',
-    catalog_name='catalog',
+    catalog_name='intake_catalog',
     description='',
     make_remote=False,
-    output_format='csv',
+    output_format='csv_and_json',
     **kwargs
 ):
     """Creates an intake esm catalog from a collection assets.
@@ -412,23 +440,21 @@ def create_catalog(
     b.df = new_df.from_records(dict_list)
     # print(b.df)
 
-    if version.parse(ecgtools.__version__) < version.parse('2024.7.31'):
-        kwargs_save = {'format_column_name':'format'}
-    else :
-        kwargs_save = {}
 
-    if output_format.lower() == 'csv' or output_format.lower() == 'parquet':
+    if output_format.lower() == 'csv_and_json':
         catalog_type = 'file'
-    elif output_format.lower() == 'json':
-        catalog_type = 'json'
+    elif output_format.lower() == 'single_json':
+        catalog_type = 'dict'
     else:
         raise ValueError(f'Unsupported output format: {output_format}')
 
+    # local ecgtools install from the https://github.com/rpconroy/ecgtools
     b.save(
         name=catalog_name,
         path_column_name='path',
         variable_column_name='variable',
-        data_format='netcdf',
+        format_column_name='format',
+        data_format='reference',
         groupby_attrs=[
             'variable',
             'short_name'
@@ -443,17 +469,37 @@ def create_catalog(
         ],
         catalog_type=catalog_type,
         description=description,
-        directory=out,
-        **kwargs_save
+        directory=out
     )
 
-    
-    if output_format == 'parquet':
-        convert_to_parquet(os.path.join(out,f'{catalog_name}'))
 
+    
+    # if output_format == 'parquet':
+    #     convert_to_parquet(os.path.join(out,f'{catalog_name}'))
+
+
+    # check output format
+    if output_format.lower() == 'csv_and_json':
+        file_ext = 'csv'
+    # elif output_format.lower() == 'parquet':
+    #     output_ext = '.parq'
+    elif output_format.lower() == 'single_json':
+        file_ext = 'json'
+    else:
+        raise ValueError(f'Unsupported output format: {output_format}')
+    
+    # change the json file catalog_file entry
+    if output_format.lower() == 'csv_and_json':
+        # modify json file
+        jsonfile = os.path.join(out, f"{catalog_name}.json")
+        with open(jsonfile) as fh:
+            data = json.load(fh)
+        data['catalog_file'] = f'{catalog_name}.csv'
+        with open(jsonfile, 'w') as fh:
+            json.dump(data, fh)
 
     if make_remote:
-        remote_catalog_file = os.path.join(out,f'{catalog_name}.{output_format}')
+        remote_catalog_file = os.path.join(out,f'{catalog_name}.{file_ext}')
         make_remote_catalog(remote_catalog_file, output_format=output_format)
 
 
