@@ -6,6 +6,56 @@ Code used to generate the intake-esm catalogs used to access various datasets in
 
 This repository contains tools and scripts for generating intake-ESM catalogs that provide unified access to diverse Earth science datasets. While intake-ESM was originally designed for Earth System Model output, we extend its use to observations, reanalysis data, and other Earth science datasets.
 
+## Repo Usage
+
+The primary tool is generator/create_catalog.py. It generates an intake-ESM catalog for a specific dataset directory.
+
+Basic CLI
+```
+python generator/create_catalog.py <directory> \
+    [--out <output directory>] \
+    [--catalog_name <name>] \
+    [--description <description>] \
+    [--exclude <glob>] \
+    [--depth <int>] \
+    [--ignore_vars <var name>] \
+    [--var_metadata <json string|filename>] \
+    [--global_metadata <json string|filename>] \
+    [--output_format <csv_and_json|single_json>] \
+    [--data_format <reference|kerchunk|other>] \
+    [--make_remote]
+```
+
+Options (brief)
+- <directory>: Root data directory to scan.
+- --out: Destination directory for generated catalog files (default: current directory).
+- --catalog_name: Name to use for the catalog file(s).
+- --description: Short human-readable description for the catalog.
+- --exclude: Glob pattern to exclude files or directories.
+- --depth: Maximum directory recursion depth (integer).
+- --ignore_vars: Variable names to ignore (can be repeated or comma-separated).
+- --var_metadata: Per-variable metadata as a JSON string or a path to a JSON file.
+- --global_metadata: Catalog-level metadata as a JSON string or a path to a JSON file.
+- --output_format: Output style; "csv_and_json" emits CSV + JSON index files, "single_json" emits a single JSON catalog.
+- --data_format: Input data/reference type (e.g., reference, netcdf); influences parsing behavior.
+- --make_remote: If set, prepare remote-accessible references for https and osdf (boolean flag).
+
+Example
+```
+python generator/create_catalog.py \
+  /gdex/data/need/to/be/cataloged/ \
+  --data_format reference \
+  --out /data/path/to/store/catalog \
+  --output_format csv_and_json \
+  --catalog_name intake_catalog \
+  --description "reference catalog" \
+  --depth 0 \
+  --make_remote
+```
+
+Notes
+- See generator/create_catalog.py source for full option parsing and advanced behaviors.
+
 ## Key Features
 
 ### 1. Custom Catalog Generation Tools (ecgtools)
@@ -42,9 +92,9 @@ Web-based access for remote users and standard HTTP protocols
 #### c) OSDF (Open Science Data Federation)
 Distributed access through the Open Science Data Federation for broader community access
 
-## Usage Examples
+## Catelog Usage Examples
 
-For comprehensive usage examples and tutorials:
+For comprehensive usage examples and tutorials for the generated catelog:
 
 - **NCAR HPC users**: Visit [gdex-examples](https://ncar.github.io/gdex-examples/)
 - **OSDF users**: Visit [osdf_examples](https://ncar.github.io/osdf_examples/)
