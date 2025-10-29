@@ -2,11 +2,10 @@
 """CLI to generate intake-esm cataloges.
 Can handle zarr, kerchunk, netcdf, or grib.
 
-
-package version needed to be pined:
-    intake-esm                2025.7.9
-    ecgtools                  Riley's fork version
-    pydantic                  2.11.9
+Package version needed to be pined:
+    intake-esm==2025.7.9
+    pydantic==2.11.9
+    ecgtools@git+https://github.com/rpconroy/ecgtools.git@0b3d5b5d0082812e85c821c00c2d619eed0ae3cd#egg=ecgtools
 
 Usage:    
 
