@@ -18,6 +18,7 @@ python create_catalog.py <directory>
           [--ignore_vars <var name>]
           [--var_metadata <json string/filename>]
           [--global_metadata <json string/filename>]
+          [--output_format <csv_and_json/single_json>]
           [--make_remote]
 
 
