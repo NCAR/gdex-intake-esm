@@ -10,16 +10,17 @@ Package version needed to be pined:
 Usage:    
 
 python create_catalog.py <directory> 
-          [--out <output directory>]
-          [--catalog_name <name>]
-          [--description <description>]
-          [--exclude <glob>]
-          [--depth <value>]
-          [--ignore_vars <var name>]
-          [--var_metadata <json string/filename>]
-          [--global_metadata <json string/filename>]
-          [--output_format <csv_and_json/single_json>]
-          [--make_remote]
+    [--out <output directory>]
+    [--catalog_name <name>]
+    [--description <description>]
+    [--exclude <glob>]
+    [--include <glob>]
+    [--depth <value>]
+    [--ignore_vars <var name>]
+    [--var_metadata <json string/filename>]
+    [--global_metadata <json string/filename>]
+    [--output_format <csv_and_json/single_json>]
+    [--make_remote]
 
 
 Testing example:
@@ -92,6 +93,11 @@ def get_parser():
             required=False,
             metavar='<glob>',
             help="Exclude glob")
+    parser.add_argument('--include', '-ic',
+            nargs='*',
+            required=False,
+            metavar='<glob>',
+            help="Include glob")
     parser.add_argument('--depth', '-d',
             type=int,
             nargs=None,
@@ -336,7 +342,8 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
     # define replacement strings and write new files
     match_str = '/glade/campaign/collections/gdex/data/'
     https_str = 'https://data.gdex.ucar.edu/'
-    osdf_str = 'https://data-osdf.gdex.ucar.edu/'
+    # osdf_str = 'https://data-osdf.gdex.ucar.edu/'
+    osdf_str = 'osdf:///ncar/gdex/'
 
     if output_format.lower() == 'csv_and_json':
         # modify csv file line by line
@@ -357,14 +364,16 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
             data = json.load(fh)
         # Create OSDF version dir structure need to be
         #  https://data-osdf.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}_catalog-osdf.csv
-        data['catalog_file'] = f'{osdf_str}{dataset_id}/catalogs/{dataset_id}_catalog-osdf.csv'
+        # data['catalog_file'] = f'{osdf_str}{dataset_id}/catalogs/{dataset_id}_catalog-osdf.csv'
+        data['catalog_file'] = f'{dataset_id}_catalog-osdf.csv'
         osdf_outfile = json_filename.replace('.json', '-osdf.json')
         with open(osdf_outfile, 'w') as osdf_fh:
             json.dump(data, osdf_fh)
         # Create HTTPS version
         #  https version dir structure need to be
         #  https://data.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}_catalog-http.csv
-        data['catalog_file'] = f'{https_str}{dataset_id}/catalogs/{dataset_id}_catalog-http.csv'
+        # data['catalog_file'] = f'{https_str}{dataset_id}/catalogs/{dataset_id}_catalog-http.csv'
+        data['catalog_file'] = f'{dataset_id}_catalog-http.csv'
         https_outfile = json_filename.replace('.json', '-http.json')
         with open(https_outfile, 'w') as https_fh:
             json.dump(data, https_fh)
@@ -400,7 +409,8 @@ def create_catalog(
     directories,
     out='./',
     depth=20,
-    exclude='',
+    include=None,
+    exclude=None,
     catalog_name='intake_catalog',
     description='',
     make_remote=False,
@@ -413,6 +423,7 @@ def create_catalog(
         directories (list): Search directories
         out (str): output file location
         depth (int): How deep to search
+        include: Regex to include. e.g. .*\.nc
         exclude: Regex to exclude. e.g. .*\.html
         catalog_name (str): filename of catalog
         description (str): short description of catalog.
@@ -425,6 +436,7 @@ def create_catalog(
     b = ecgtools.Builder(
         paths=directories,
         depth=depth,
+        include_patterns=include,
         exclude_patterns=exclude
     )
     b.build(parsing_func=file_parser, parsing_func_kwargs=kwargs)
@@ -527,6 +539,7 @@ def main(args_list):
     args_dict.pop('global_metadata')
     args_dict.pop('var_metadata')
     # call create_catalog with args
+    print(f'Creating catalog with args: {args_dict}')
     create_catalog(**args_dict)
 
 
