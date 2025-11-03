@@ -22,6 +22,9 @@ python create_catalog.py <directory>
     [--output_format <csv_and_json/single_json>]
     [--make_remote]
 
+Notes:
+- if --make_remote is set, the catalog naming convention must be followed:
+    {dataset_id}-{protocol}
 
 Testing example:
 python create_catalog.py /lustre/desc1/scratch/chiaweih/d640000.jra3q/kerchunk_test/ --data_format reference --out /lustre/desc1/scratch/chiaweih/d640000.jra3q/catalog --output_format csv_and_json --catalog_name d640000_catalog --description "JRA3Q kerchunk catalog" --depth 0 --make_remote
@@ -80,8 +83,8 @@ def get_parser():
             type=str,
             required=False,
             metavar='<name>',
-            default='intake_catalog',
-            help="Name of catalog should be in the format of dxxxxxx_catalog")
+            default='dnnnnnn-posix',
+            help="Name of catalog should be in the format of dnnnnnn_posix to ensure remote copies work.")
     parser.add_argument('--description',
             type=str,
             required=False,
@@ -316,7 +319,35 @@ def convert_to_parquet(filename_base):
 
 
 def make_remote_catalog(filename, output_format='csv_and_json'):
-    """Make OSDF and HTTP versions of a given file."""
+    """
+    Make OSDF and HTTP versions of a given file.
+
+    Parameters
+    ----------
+    filename : str
+        Local file path to the catalog file (csv or json).
+
+    Raises
+    ------
+    ValueError
+        If the filename does not follow the required naming convention
+        of {dataset_id}-posix{.csv/.json}.
+
+    Notes
+    -----
+    Assumes that the input filename contains paths. Both the OSDF and HTTP
+    versions will be created by replacing the local path prefix with the
+    appropriate remote path prefix. The posix protocol file name must be in
+    the format of 
+
+        {dataset_id}-{protocol}.csv or .json
+
+    Since the catalog file name is not foreced to be in that format,
+    The function will check for the filenaming convention to determine
+    if the file is valid for remote copy creation. if convention is not 
+    met, an error will be raised and the function will exit.
+
+    """
     print(f'Making remote copies of {filename}')
     # find name before extension
     filename_base = os.path.basename(filename)
@@ -336,8 +367,13 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
         raise ValueError(f'Unsupported output format: {output_format}')
 
     # define output filenames
-    osdf_outfile = filename.replace(output_ext, f'-osdf{output_ext}')
-    https_outfile = filename.replace(output_ext, f'-http{output_ext}')
+    osdf_outfile = filename.replace(f'-posix{output_ext}', f'-osdf{output_ext}')
+    https_outfile = filename.replace(f'-posix{output_ext}', f'-https{output_ext}')
+    # check if catalog filename follows naming convention
+    if osdf_outfile == filename or https_outfile == filename:
+        raise ValueError(
+            f'Filename {filename} does not follow the required naming convention of {{dataset_id}}-posix{{.csv/.json}}'
+        )
 
     # define replacement strings and write new files
     match_str = '/glade/campaign/collections/gdex/data/'
@@ -363,18 +399,18 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
         with open(json_filename) as fh:
             data = json.load(fh)
         # Create OSDF version dir structure need to be
-        #  https://data-osdf.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}_catalog-osdf.csv
-        # data['catalog_file'] = f'{osdf_str}{dataset_id}/catalogs/{dataset_id}_catalog-osdf.csv'
-        data['catalog_file'] = f'{dataset_id}_catalog-osdf.csv'
-        osdf_outfile = json_filename.replace('.json', '-osdf.json')
+        #  https://data-osdf.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}-osdf.csv
+        # data['catalog_file'] = f'{osdf_str}{dataset_id}/catalogs/{dataset_id}-osdf.csv'
+        data['catalog_file'] = f'{dataset_id}-osdf.csv'
+        osdf_outfile = json_filename.replace('-posix.json', '-osdf.json')
         with open(osdf_outfile, 'w') as osdf_fh:
             json.dump(data, osdf_fh)
         # Create HTTPS version
         #  https version dir structure need to be
-        #  https://data.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}_catalog-http.csv
-        # data['catalog_file'] = f'{https_str}{dataset_id}/catalogs/{dataset_id}_catalog-http.csv'
-        data['catalog_file'] = f'{dataset_id}_catalog-http.csv'
-        https_outfile = json_filename.replace('.json', '-http.json')
+        #  https://data.gdex.ucar.edu/{dataset_id}/catalogs/{dataset_id}-https.csv
+        # data['catalog_file'] = f'{https_str}{dataset_id}/catalogs/{dataset_id}-https.csv'
+        data['catalog_file'] = f'{dataset_id}-https.csv'
+        https_outfile = json_filename.replace('-posix.json', '-https.json')
         with open(https_outfile, 'w') as https_fh:
             json.dump(data, https_fh)
 
@@ -392,12 +428,10 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
             data = json.load(fh)
         # Create OSDF version
         data_osdf = json.loads(json.dumps(data).replace(match_str, osdf_str))
-        osdf_outfile = filename.replace(output_ext, f'-osdf{output_ext}')
         with open(osdf_outfile, 'w') as osdf_fh:
             json.dump(data_osdf, osdf_fh)
         # Create HTTPS version
         data_https = json.loads(json.dumps(data).replace(match_str, https_str))
-        https_outfile = filename.replace(output_ext, f'-http{output_ext}')
         with open(https_outfile, 'w') as https_fh:
             json.dump(data_https, https_fh)
 
@@ -411,7 +445,7 @@ def create_catalog(
     depth=20,
     include=None,
     exclude=None,
-    catalog_name='intake_catalog',
+    catalog_name=None,
     description='',
     make_remote=False,
     output_format='csv_and_json',
