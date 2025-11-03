@@ -79,6 +79,13 @@ def get_parser():
             metavar='<directory>',
             default='./',
             help="Directory to ouput catalog file.")
+    parser.add_argument('--data_location', '-dl',
+            type=str,
+            required=False,
+            metavar='<location>',
+            choices=['glade', 'obj_store'],
+            help='The data location (glade / obj_store).',
+            default='glade')
     parser.add_argument('--catalog_name', '-n',
             type=str,
             required=False,
@@ -318,7 +325,7 @@ def convert_to_parquet(filename_base):
 #     json.dump(cat, open(json_file, 'w'))
 
 
-def make_remote_catalog(filename, output_format='csv_and_json'):
+def make_remote_catalog(filename, output_format='csv_and_json', data_location='glade'):
     """
     Make OSDF and HTTP versions of a given file.
 
@@ -353,8 +360,8 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
     filename_base = os.path.basename(filename)
     # find output directory path
     out_dir = os.path.dirname(filename)
-    # based on catalog output format get the dataset number
-    dataset_id = filename_base.split('_')[0]
+    # based on catalog output format get the dataset number (filename format need to be dsid-protocol.ext)
+    dataset_id = filename_base.split('-')[0]
 
     # check output format
     if output_format.lower() == 'csv_and_json':
@@ -377,9 +384,15 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
 
     # define replacement strings and write new files
     match_str = '/glade/campaign/collections/gdex/data/'
-    https_str = 'https://data.gdex.ucar.edu/'
-    # osdf_str = 'https://data-osdf.gdex.ucar.edu/'
-    osdf_str = 'osdf:///ncar/gdex/'
+    if data_location == 'glade':
+        https_str = 'https://data.gdex.ucar.edu/'
+        # osdf_str = 'https://data-osdf.gdex.ucar.edu/'
+        osdf_str = 'osdf:///ncar/gdex/'
+    elif data_location == 'obj_store':
+        https_str = 'https://osdata.gdex.ucar.edu/'
+        osdf_str = 'osdf:///ncar-gdex/'
+    else:
+        raise ValueError(f'Unsupported data location: {data_location}')
 
     if output_format.lower() == 'csv_and_json':
         # modify csv file line by line
@@ -449,6 +462,7 @@ def create_catalog(
     description='',
     make_remote=False,
     output_format='csv_and_json',
+    data_location=None,
     **kwargs
 ):
     """Creates an intake esm catalog from a collection assets.
@@ -546,7 +560,7 @@ def create_catalog(
 
     if make_remote:
         remote_catalog_file = os.path.join(out,f'{catalog_name}.{file_ext}')
-        make_remote_catalog(remote_catalog_file, output_format=output_format)
+        make_remote_catalog(remote_catalog_file, output_format=output_format, data_location=data_location)
 
 
 def main(args_list):
