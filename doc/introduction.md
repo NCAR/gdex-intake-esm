@@ -1,10 +1,6 @@
 ---
 title: Introduction
 date: 2025-11-04
-authors:
-  - name: Chia-Wei Hsu
-    affiliations:
-    - NCAR|NSF
 ---
 
 # Introduction
