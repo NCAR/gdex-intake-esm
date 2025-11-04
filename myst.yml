@@ -26,8 +26,9 @@ project:
         - file: notebooks/era5_posix.ipynb
         - file: notebooks/jra3q.ipynb
         - file: notebooks/na-cordex.ipynb
+    - file: examples/README.md
     - title: Catalog Creation Examples
-      file: examples/README.md
+    
       
     
 site:
