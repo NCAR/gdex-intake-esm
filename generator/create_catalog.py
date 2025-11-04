@@ -84,7 +84,7 @@ def get_parser():
             required=False,
             metavar='<name>',
             default='dnnnnnn-posix',
-            help="Name of catalog should be in the format of dnnnnnn_posix to ensure remote copies work.")
+            help="Name of catalog should be in the format of dnnnnnn-posix to ensure remote copies work.")
     parser.add_argument('--description',
             type=str,
             required=False,
