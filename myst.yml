@@ -8,7 +8,13 @@ project:
     Documentation for creating the GDEX Intake ESM Catalog, a collection of
     use cases and data pipeline scripts.
   keywords: ["jupyterbook2","GDEX","Intake catalog"]
-  authors: ["Harsha R. Hampapura","Riley Conroy","Chia-Wei Hsu"]
+  authors: 
+   - name: Harsha R. Hampapura
+     github: hrhampapura
+   - name: Riley Conroy
+     github: rpconroy
+   - name: Chia-Wei Hsu
+     github: chiaweh2
   github: https://github.com/NCAR/gdex-intake-esm
 
   # To autogenerate a Table of Contents, run "jupyter book init --write-toc"
