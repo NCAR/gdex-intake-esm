@@ -8,7 +8,7 @@ The examples show real-world usage patterns for the `create_catalog.py` tool and
 
 ## Available Scripts
 
-- `d640000.jra3q.py` : script to create the JRA3Q catalog that contain posix (GLADE access), https (https URL access), osdf (open science data federation access)
+- [`d640000.jra3q.py`](https://github.com/NCAR/gdex-intake-esm/blob/main/examples/d640000.jra3q.py) : script to create the JRA3Q catalog that contain posix (GLADE access), https (https URL access), osdf (open science data federation access)
 
 
 ## Repository
