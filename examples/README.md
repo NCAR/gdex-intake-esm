@@ -14,4 +14,4 @@ The examples show real-world usage patterns for the `create_catalog.py` tool and
 ## Repository
 
 To view the python script for cataloging pipeling, visit the GitHub repository:
-🔗 **[NCAR/gdex-intake-esm/examples](https://github.com/NCAR/gdex-intake-esm/examples)**
+🔗 **[NCAR/gdex-intake-esm/examples](https://github.com/NCAR/gdex-intake-esm/tree/main/examples)**
