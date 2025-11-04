@@ -8,7 +8,7 @@ This repository contains tools and scripts for generating intake-ESM catalogs th
 
 ## Repo Usage
 
-The primary tool is generator/create_catalog.py. It generates an intake-ESM catalog for a specific dataset directory.
+The primary tool is `generator/create_catalog.py`. It generates an intake-ESM catalog for a specific dataset directory.
 
 Basic CLI
 ```
@@ -16,31 +16,33 @@ python generator/create_catalog.py <directory> \
     [--out <output directory>] \
     [--catalog_name <name>] \
     [--description <description>] \
-    [--exclude <glob>] \
+    [--exclude <glob> ...] \
+    [--include <glob> ...] \
     [--depth <int>] \
-    [--ignore_vars <var name>] \
+    [--ignore_vars <var name> ...] \
     [--var_metadata <json string|filename>] \
     [--global_metadata <json string|filename>] \
     [--output_format <csv_and_json|single_json>] \
-    [--data_format <reference|kerchunk|other>] \
+    [--data_format <netcdf|zarr|reference>] \
     [--make_remote]
 ```
 
-Options (brief)
-- <directory>: Root data directory to scan.
-- --out: Destination directory for generated catalog files (default: current directory).
-- --catalog_name: Name to use for the catalog file(s).
-- --description: Short human-readable description for the catalog.
-- --exclude: Glob pattern to exclude files or directories.
-- --depth: Maximum directory recursion depth (integer).
-- --ignore_vars: Variable names to ignore (can be repeated or comma-separated).
-- --var_metadata: Per-variable metadata as a JSON string or a path to a JSON file.
-- --global_metadata: Catalog-level metadata as a JSON string or a path to a JSON file.
-- --output_format: Output style; "csv_and_json" emits CSV + JSON index files, "single_json" emits a single JSON catalog.
-- --data_format: Input data/reference type (e.g., reference, netcdf); influences parsing behavior.
-- --make_remote: If set, prepare remote-accessible references for https and osdf (boolean flag).
+#### Options (brief)
+- `<directory>`: One or more root data directories to scan (space-separated).
+- `--out`, `-o`: Destination directory for generated catalog files (default: `./`).
+- `--catalog_name`, `-n`: Name to use for the catalog file(s) (default: `dnnnnnn-posix`).
+- `--description`: Short human-readable description for the catalog (default: `N/A`).
+- `--exclude`, `-e`: Glob pattern(s) to exclude files or directories (can be repeated).
+- `--include`, `-ic`: Glob pattern(s) to include files or directories (can be repeated).
+- `--depth`, `-d`: Maximum directory recursion depth (integer, default: 0).
+- `--ignore_vars`, `-i`: Variable names to ignore (can be repeated).
+- `--var_metadata`, `-vm`: Per-variable metadata as a JSON string or a path to a JSON file.
+- `--global_metadata`, `-gm`: Catalog-level metadata as a JSON string or a path to a JSON file.
+- `--output_format`, `-of`: Output style; `csv_and_json` emits CSV + JSON index files, `single_json` emits a single JSON catalog (default: `csv_and_json`).
+- `--data_format`, `-df`: Input data/reference type: `netcdf`, `zarr`, or `reference` (default: `netcdf`).
+- `--make_remote`, `-mr`: If set, prepare remote-accessible references for https and osdf (boolean flag).
 
-Example
+#### Example
 ```
 python generator/create_catalog.py \
   /gdex/data/need/to/be/cataloged/ \
@@ -50,11 +52,16 @@ python generator/create_catalog.py \
   --catalog_name intake_catalog \
   --description "reference catalog" \
   --depth 0 \
+  --include "*.zarr" \
+  --exclude "*.tmp" \
+  --ignore_vars utc_date \
+  --var_metadata var_meta.json \
+  --global_metadata global_meta.json \
   --make_remote
 ```
 
 Notes
-- See generator/create_catalog.py source for full option parsing and advanced behaviors.
+- See `generator/create_catalog.py` source for full option parsing and advanced behaviors.
 
 ## Key Features
 
