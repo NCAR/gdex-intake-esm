@@ -1,6 +1,6 @@
-# gdex-intake-esm
+# GDEX Intake ESM catalogs
 
-Code used to generate the intake-esm catalogs used to access various datasets in NCAR's GDEX.
+Code used to generate the intake-esm catalogs used to access various datasets in NCAR's GDEX and examples of utilizing the generated catalogs.
 
 ## Overview
 
