@@ -30,17 +30,8 @@ project:
     - title: Catalog Usage Examples
       children:
         - file: notebooks/cesm2_lens.ipynb
-        - file: notebooks/cmip6_aws.ipynb
-        - file: notebooks/conus404.ipynb
-        - file: notebooks/dart-cam6.ipynb
-        - file: notebooks/era5_batch.ipynb
         - file: notebooks/era5.ipynb
-        - file: notebooks/era5_posix.ipynb
-        - file: notebooks/jra3q.ipynb
-        - file: notebooks/na-cordex.ipynb
-
-    
-      
+            
     
 site:
   template: book-theme
