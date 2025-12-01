@@ -354,7 +354,7 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
     # find output directory path
     out_dir = os.path.dirname(filename)
     # based on catalog output format get the dataset number
-    dataset_id = filename_base.split('_')[0]
+    dataset_id = filename_base.split('-')[0]
 
     # check output format
     if output_format.lower() == 'csv_and_json':
@@ -381,16 +381,48 @@ def make_remote_catalog(filename, output_format='csv_and_json'):
     # osdf_str = 'https://data-osdf.gdex.ucar.edu/'
     osdf_str = 'osdf:///ncar/gdex/'
 
+
     if output_format.lower() == 'csv_and_json':
         # modify csv file line by line
-        with open(filename) as fh:
-            osdf_fh = open(osdf_outfile, 'w')
-            https_fh = open(https_outfile, 'w')
+        with open(filename, 'r', encoding='utf-8') as fh:
+            osdf_fh = open(osdf_outfile, 'w', encoding='utf-8')
+            https_fh = open(https_outfile, 'w', encoding='utf-8')
             for i in fh:
-                new_str_osdf = i.replace(match_str, osdf_str)
-                osdf_fh.write(new_str_osdf)
-                new_str_https = i.replace(match_str, https_str)
-                https_fh.write(new_str_https)
+                if i.split(',')[0].strip() == 'path':
+                    # write header line
+                    osdf_fh.write(i)
+                    https_fh.write(i)
+                    continue
+                # seperate each line by comma (assuming path is the first column)
+                url_https = i.split(',')[0]
+                # change the path (https protocol)
+                url_https = url_https.replace(match_str, https_str)
+                # change the basename to include protocol
+                basename_https = os.path.basename(url_https)
+                rename_basename_elem_https = basename_https.split('.')
+                rename_basename_elem_https[-2] = rename_basename_elem_https[-2] + '-remote-https'
+                rename_basename_https = '.'.join(rename_basename_elem_https)
+                url_https = url_https.replace(basename_https, rename_basename_https)
+                # replace path in line
+                https_new_line = i.replace(i.split(',')[0], url_https)
+                # write new line
+                https_fh.write(https_new_line)
+
+                # seperate each line by comma (assuming path is the first column)
+                url_osdf = i.split(',')[0]
+                # change the path (osdf protocol)
+                url_osdf = url_osdf.replace(match_str, osdf_str)
+                # change the basename to include protocol
+                basename_osdf = os.path.basename(url_osdf)
+                rename_basename_elem_osdf = basename_osdf.split('.')
+                rename_basename_elem_osdf[-2] = rename_basename_elem_osdf[-2] + '-remote-osdf'
+                rename_basename_osdf = '.'.join(rename_basename_elem_osdf)
+                url_osdf = url_osdf.replace(basename_osdf, rename_basename_osdf)
+                # replace path in line
+                osdf_new_line = i.replace(i.split(',')[0], url_osdf)
+                # write new line
+                osdf_fh.write(osdf_new_line)
+
             osdf_fh.close()
             https_fh.close()
 
