@@ -1,0 +1,4 @@
+# Change the file name to .env to let the 
+# boto3 configuration (boreas)
+BOREAS_ACCESS_KEY_ID=
+BOREAS_SECRET_ACCESS_KEY=
