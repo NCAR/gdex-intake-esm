@@ -61,7 +61,6 @@ NO_DATA_STR = ""
 BOREAS_BUCKET_NAME = 'gdex-data'
 BOREAS_ENDPOINT_URL = 'https://boreas.hpc.ucar.edu:6443'
 
-
 def load_env():
     """
     Load .env file from the top level directory.
@@ -93,11 +92,6 @@ def load_env():
         log_error = f".env file not found at {env_file}"
         print(log_error)
         raise FileNotFoundError(log_error)
-
-load_env()
-BOREAS_ACCESS_KEY_ID = os.getenv('BOREAS_ACCESS_KEY_ID')
-BOREAS_SECRET_ACCESS_KEY = os.getenv('BOREAS_SECRET_ACCESS_KEY')
-
 
 def get_parser():
     """Returns argpars parser."""
@@ -626,7 +620,6 @@ def create_catalog(
     b.df = new_df.from_records(dict_list)
     # print(b.df)
 
-
     if output_format.lower() == 'csv_and_json':
         catalog_type = 'file'
     elif output_format.lower() == 'single_json':
@@ -712,6 +705,10 @@ def main(args_list):
 
     # Auto-populate storage_options when any directory is an s3:// path
     if any(d.startswith('s3://') for d in args_dict['directories']):
+        # load BOREAS credentials from .env file in top level directory
+        load_env()
+        BOREAS_ACCESS_KEY_ID = os.getenv('BOREAS_ACCESS_KEY_ID')
+        BOREAS_SECRET_ACCESS_KEY = os.getenv('BOREAS_SECRET_ACCESS_KEY')
         args_dict['storage_options'] = {
             's3': {
                 'client_kwargs': {'endpoint_url': BOREAS_ENDPOINT_URL},
@@ -730,4 +727,3 @@ def main(args_list):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
-
