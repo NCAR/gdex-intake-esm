@@ -164,16 +164,18 @@ def get_parser():
             help="Optionally ignore specific variables e.g. utc_date")
     parser.add_argument('--var_metadata', '-vm',
             type=str,
+            nargs='*',
             required=False,
-            metavar='<json string/filename>',
-            default='{}',
-            help="Additional variable level metadata to extract.")
+            metavar='<attr name>',
+            default=[],
+            help="Additional variable level metadata to extract. e.g. long_name standard_name")
     parser.add_argument('--global_metadata', '-gm',
             type=str,
+            nargs='*',
             required=False,
-            metavar='<json string/filename>',
-            default='{}',
-            help="Additional global level metadata to extract.")
+            metavar='<attr name>',
+            default=[],
+            help="Additional global level metadata to extract. e.g. member_id group_id")
     parser.add_argument('--make_remote', '-mr',
             action='store_true',
             required=False,
@@ -186,6 +188,13 @@ def get_parser():
             choices=['csv_and_json', 'single_json'],
             help='The output format of the catalog (csv_and_json / single_json).',
             default='csv_and_json')
+    parser.add_argument('--use_cftime',
+            type=lambda x: x.lower() == 'true',
+            metavar='<True|False>',
+            required=False,
+            help='Use cftime objects for time decoding instead of numpy datetime64.',
+            default=False)
+   
 
     return parser
 
@@ -249,8 +258,7 @@ def get_var_attrs(var):
                 var_attrs['level_units'] = cur_var.attrs['units']
     return var_attrs
 
-
-def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_vars=None, var_metadata=None, global_metadata=None):
+def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_vars=None, var_metadata=None, global_metadata=None, use_cftime=False):
     """File parser used in Builder object to extract column values.
 
     Args:
@@ -262,7 +270,7 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
             ex: ['long_name', 'standard_name']
         global_metadata (list(str)): Extra global level metadata to pull.
             ex: ['title', 'institution']
-
+        use_cftime (bool): Whether to use cftime for time decoding.
     Returns:
         dict: Keys are column names and values specific to file.
     """
@@ -275,19 +283,34 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
         global_metadata = []
 
     catalog_items = []
-    backend_kwargs = None
+    backend_kwargs = {}
 
     print(f'Gathering {file_path}')
     path_str = file_path
 
+    # set backend_kwarg for cftime decoding if option is set
+    if use_cftime:
+        time_coder = xarray.coders.CFDatetimeCoder(use_cftime=True)
+        backend_kwargs['decode_times'] = time_coder
+        try:
+            # test if cftime decoding works for this file
+            with xarray.open_dataset(file_path, engine=get_engine(file_path), backend_kwargs=backend_kwargs) as ds:
+                pass
+        except ValueError as e:
+            backend_kwargs['decode_times'] = False
+            print(f'Warning: cftime decoding failed for file {file_path} with error: {e}. Falling back to no time decoding.')
+    else:
+        backend_kwargs['decode_times'] = None
+
     # Handle reference case
     if data_format == 'reference':
+        print(f'Handling reference format for file: {file_path}')
         if version.parse(xarray.__version__) < version.parse('2025.9.1'):
             # original kerchunk handling in xarray
             fs = fsspec.filesystem('reference', fo=file_path)
             file_path = fs.get_mapper('')
             engine = 'zarr'
-            backend_kwargs = {'consolidated':False}
+            backend_kwargs['consolidated'] = False
         else:
             # works for kerchunk or virtualizarr references
             engine = 'kerchunk'
@@ -296,7 +319,9 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
         engine = 'zarr'
         if zarr_format is None:
             zarr_format = 2
-        backend_kwargs = {'consolidated':True, 'zarr_format':int(zarr_format)}
+        print(f'Handling zarr format for file: {file_path} with zarr_format: {zarr_format}')
+        backend_kwargs['consolidated'] = True
+        backend_kwargs['zarr_format'] = int(zarr_format)
         
         # change to https:// boreas internal end point if file_path is s3://
         if re.match('s3://.*', file_path):
@@ -306,7 +331,12 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
             )
             path_str = file_path
     else:
+        print(f'Handling netcdf/grib format for file: {file_path}')
         engine = get_engine(file_path)
+
+    # if empty reset to None for xarray compatibility
+    if backend_kwargs == {}:
+        backend_kwargs = None
         
 
     # try:
@@ -337,8 +367,9 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
             # add extra global metadata(catalog columns) and its value for each variable
             if len(global_metadata) > 0:
                 for attr in global_metadata:
-                    if attr in ds.attrs:
-                        catalog_item.update({attr:ds.attrs[attr]})
+                    # if attr in ds.attrs:
+                    globalmeta= ds.attrs.get(attr, NO_DATA_STR)
+                    catalog_item.update({attr:globalmeta})
 
             # add standard variable attributes
             catalog_item.update(get_var_attrs(var))
@@ -633,7 +664,7 @@ def create_catalog(
         path_column_name='path',
         variable_column_name='variable',
         format_column_name='format',
-        data_format='reference',
+        data_format=kwargs['data_format'],
         groupby_attrs=[
             'variable',
             'short_name'
@@ -705,6 +736,7 @@ def main(args_list):
 
     # Auto-populate storage_options when any directory is an s3:// path
     if any(d.startswith('s3://') for d in args_dict['directories']):
+        print('S3 path detected in directories, auto-populating storage_options for BOREAS S3 bucket.')
         # load BOREAS credentials from .env file in top level directory
         load_env()
         BOREAS_ACCESS_KEY_ID = os.getenv('BOREAS_ACCESS_KEY_ID')
@@ -718,8 +750,8 @@ def main(args_list):
         }
 
     # remove unneeded args (for consistency with other dataset)
-    args_dict.pop('global_metadata')
-    args_dict.pop('var_metadata')
+    # args_dict.pop('global_metadata')
+    # args_dict.pop('var_metadata')
     # call create_catalog with args
     # print(f'Creating catalog with args: {args_dict}')
     create_catalog(**args_dict)
