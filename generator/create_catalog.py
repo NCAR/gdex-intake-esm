@@ -17,6 +17,7 @@ python create_catalog.py <directory>
     [--include <glob>]
     [--depth <value>]
     [--ignore_vars <var name>]
+    [--use_cftime <True|False>]
     [--var_metadata <json string/filename>]
     [--global_metadata <json string/filename>]
     [--output_format <csv_and_json/single_json>]
@@ -142,11 +143,13 @@ def get_parser():
             nargs='*',
             required=False,
             metavar='<glob>',
+            default=[],
             help="Exclude glob")
     parser.add_argument('--include', '-ic',
             nargs='*',
             required=False,
             metavar='<glob>',
+            default=[],
             help="Include glob")
     parser.add_argument('--depth', '-d',
             type=int,
@@ -157,7 +160,7 @@ def get_parser():
             help="depth to search")
     parser.add_argument('--ignore_vars', '-i',
             type=str,
-            nargs='*',
+            nargs='+',
             required=False,
             metavar='<var name>',
             default=[],
@@ -214,7 +217,7 @@ def get_engine(file_path):
     elif re.match('.*\.zarr$', file_path):
         return 'zarr'
     elif re.match('.*\.json$', file_path):
-        return 'reference'
+        return 'kerchunk'
     elif re.match('.*\.parq$', file_path):
         return 'reference'
     else:
@@ -287,6 +290,8 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
 
     print(f'Gathering {file_path}')
     path_str = file_path
+
+    print(f'ignore_vars == {ignore_vars}')
 
     # set backend_kwarg for cftime decoding if option is set
     if use_cftime:
