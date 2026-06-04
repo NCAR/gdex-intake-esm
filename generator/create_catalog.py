@@ -291,8 +291,6 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
     print(f'Gathering {file_path}')
     path_str = file_path
 
-    print(f'ignore_vars == {ignore_vars}')
-
     # set backend_kwarg for cftime decoding if option is set
     if use_cftime:
         time_coder = xarray.coders.CFDatetimeCoder(use_cftime=True)
