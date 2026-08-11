@@ -68,3 +68,4 @@ zict==3.0.0
 zipp==3.18.2
 matplotlib==3.10.6
 kerchunk==0.2.9
+python-dotenv==1.2.2
