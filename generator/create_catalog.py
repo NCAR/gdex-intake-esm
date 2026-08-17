@@ -486,7 +486,7 @@ def make_remote_catalog(filename, catalog_data='reference', output_format='csv_a
 
     # define replacement strings and write new files
     if catalog_data == 'reference':
-        match_str = '/glade/campaign/collections/gdex/data/'
+        match_strs = ['/glade/campaign/collections/gdex/data/','/gdex/data/']
         https_str = 'https://data.gdex.ucar.edu/'
         # osdf_str = 'https://data-osdf.gdex.ucar.edu/'
         # osdf_str = 'osdf:///ncar/gdex/'
@@ -498,13 +498,29 @@ def make_remote_catalog(filename, catalog_data='reference', output_format='csv_a
         osdf_str = 'osdf:///ncar-gdex/'
         # osdf_str = 'https://osdf-director.osg-htc.org/ncar-gdex/'
     elif catalog_data == 'zarr-glade':
-        match_str = '/glade/campaign/collections/gdex/data/'
+        match_strs = ['/glade/campaign/collections/gdex/data/','/gdex/data/']
         https_str = 'https://data.gdex.ucar.edu/'
         osdf_str = 'osdf:///ncar/gdex/'
         # osdf_str = 'https://osdf-director.osg-htc.org/ncar/gdex/'
     else:
         raise ValueError(f'Unsupported catalog data type: {catalog_data}')
 
+    # test posix path pattern
+    if catalog_data in ('reference', 'zarr-glade'):
+        with open(filename, 'r', encoding='utf-8') as fh:
+            # skip header line, read the second line (first real data row)
+            fh.readline()
+            data_line = fh.readline()
+        path_value = data_line.split(',')[0].strip()
+        if path_value.startswith(match_strs[0]):
+            match_str = match_strs[0]
+        elif path_value.startswith(match_strs[1]):
+            match_str = match_strs[1]
+        else:
+            raise ValueError(
+                f'Path {path_value} in {filename} does not start with any of the '
+                f'expected prefixes: {match_strs}'
+            )
 
     if output_format.lower() == 'csv_and_json' :
         # modify csv file line by line
