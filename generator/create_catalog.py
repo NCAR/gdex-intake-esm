@@ -288,19 +288,6 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
     print(f'Gathering {file_path}')
     path_str = file_path
 
-    # set backend_kwarg for cftime decoding if option is set
-    if use_cftime:
-        time_coder = xarray.coders.CFDatetimeCoder(use_cftime=True)
-        backend_kwargs['decode_times'] = time_coder
-        try:
-            # test if cftime decoding works for this file
-            with xarray.open_dataset(file_path, engine=get_engine(file_path), backend_kwargs=backend_kwargs) as ds:
-                pass
-        except ValueError as e:
-            backend_kwargs['decode_times'] = False
-            print(f'Warning: cftime decoding failed for file {file_path} with error: {e}. Falling back to no time decoding.')
-    else:
-        backend_kwargs['decode_times'] = None
 
     # Handle reference case
     if data_format == 'reference':
@@ -333,6 +320,20 @@ def file_parser(file_path, data_format='netcdf', zarr_format:int=None, ignore_va
     else:
         print(f'Handling netcdf/grib format for file: {file_path}')
         engine = get_engine(file_path)
+
+    # set backend_kwarg for cftime decoding if option is set
+    if use_cftime:
+        time_coder = xarray.coders.CFDatetimeCoder(use_cftime=True)
+        backend_kwargs['decode_times'] = time_coder
+        try:
+            # test if cftime decoding works for this file
+            with xarray.open_dataset(file_path, engine=engine, backend_kwargs=backend_kwargs) as ds:
+                pass
+        except ValueError as e:
+            backend_kwargs['decode_times'] = False
+            print(f'Warning: cftime decoding failed for file {file_path} with error: {e}. Falling back to no time decoding.')
+    else:
+        backend_kwargs['decode_times'] = None
 
     # if empty reset to None for xarray compatibility
     if backend_kwargs == {}:
